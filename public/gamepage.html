@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game</title>
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <h2 id="score"></h2>
+  <div id="grid" class="grid"></div>
+
+  <script>
+    // 36 unique symbols (A-Z + 0-9)
+    const baseSymbols = [
+      ...Array.from({length: 26}, (_, i) => String.fromCharCode(65 + i)),
+      ...Array.from({length: 10}, (_, i) => i.toString())
+    ];
+
+    // pick 18 pairs for 6x6 grid
+    const selected = baseSymbols.sort(() => Math.random() - 0.5).slice(0, 18);
+    const cards = [...selected, ...selected].sort(() => Math.random() - 0.5);
+
+    let flipped = [];
+    let playerScore = 0;
+    let aiScore = 0;
+    let turn = 'player';
+
+    let memory = {}; // symbol -> [indexes]
+
+    const grid = document.getElementById('grid');
+
+    cards.forEach((symbol, index) => {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.dataset.symbol = symbol;
+      card.dataset.index = index;
+      card.innerHTML = '?';
+
+      card.addEventListener('click', () => handlePlayerMove(card));
+      grid.appendChild(card);
+    });
+
+    function updateScore(){
+      document.getElementById('score').innerText = `Player: ${playerScore} | AI: ${aiScore} | Turn: ${turn}`;
+    }
+
+    function flipCard(card){
+      if(!card || card.classList.contains('matched')) return;
+      card.innerHTML = card.dataset.symbol;
+    }
+
+    function hideCards(c1, c2){
+      if(!c1 || !c2) return;
+      c1.innerHTML = '?';
+      c2.innerHTML = '?';
+    }
+
+    function handlePlayerMove(card){
+      if(turn !== 'player' || flipped.length === 2 || card.innerHTML !== '?' || card.classList.contains('matched')) return;
+
+      flipCard(card);
+      flipped.push(card);
+      remember(card);
+
+      if(flipped.length === 2){
+        setTimeout(checkMatch, 600);
+      }
+    }
+
+    function cleanMemory(symbol){
+      delete memory[symbol];
+    }
+
+    function checkMatch(){
+      const [c1, c2] = flipped;
+
+      if(!c1 || !c2) return;
+
+      if(c1.dataset.symbol === c2.dataset.symbol){
+        if(turn === 'player') playerScore += 100;
+        else aiScore += 100;
+
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+
+        cleanMemory(c1.dataset.symbol);
+      } else {
+        hideCards(c1, c2);
+        turn = turn === 'player' ? 'ai' : 'player';
+      }
+
+      flipped = [];
+      updateScore();
+
+      if(turn === 'ai') setTimeout(aiMove, 700);
+      checkEnd();
+    }
+
+    function remember(card){
+      const sym = card.dataset.symbol;
+      if(!memory[sym]) memory[sym] = [];
+
+      if(!memory[sym].includes(card.dataset.index)){
+        memory[sym].push(card.dataset.index);
+      }
+    }
+
+    function getCardByIndex(index){
+      return document.querySelector(`[data-index='${index}']`);
+    }
+
+    function aiMove(){
+      if(turn !== 'ai') return;
+
+      let move = null;
+
+      // Strategy: known pair
+      for(let sym in memory){
+        if(memory[sym].length >= 2){
+          const [i1, i2] = memory[sym];
+          const c1 = getCardByIndex(i1);
+          const c2 = getCardByIndex(i2);
+
+          if(c1 && c2 && !c1.classList.contains('matched') && !c2.classList.contains('matched')){
+            move = [c1, c2];
+            break;
+          }
+        }
+      }
+
+      if(move){
+        move.forEach(c => flipCard(c));
+        flipped = move;
+        setTimeout(checkMatch, 600);
+      } else {
+        const available = [...document.querySelectorAll('.card')]
+          .filter(c => c.innerHTML === '?' && !c.classList.contains('matched'));
+
+        const rand = available.sort(() => 0.5 - Math.random()).slice(0,2);
+
+        rand.forEach(c => {
+          flipCard(c);
+          remember(c);
+        });
+
+        flipped = rand;
+        setTimeout(checkMatch, 600);
+      }
+    }
+
+    function checkEnd(){
+      const remaining = document.querySelectorAll('.card:not(.matched)').length;
+
+      if(remaining === 0){
+        localStorage.setItem('winner', playerScore > aiScore ? 'Player' : 'AI');
+        window.location.href = 'winnerpage.html';
+      }
+    }
+
+    updateScore();
+  </script>
+</body>
+</html>

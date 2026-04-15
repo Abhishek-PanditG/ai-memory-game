@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Memory Game</title>
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <div class="center">
+    <h1>🧠 Memory Game</h1>
+    <input type="text" id="creator" placeholder="Enter your name">
+    <button onclick="startGame()">Play</button>
+  </div>
+
+  <script>
+    function startGame(){
+      const name = document.getElementById('creator').value || 'Player';
+      localStorage.setItem('playerName', name);
+      window.location.href = 'gamepage.html';
+    }
+  </script>
+</body>
+</html>

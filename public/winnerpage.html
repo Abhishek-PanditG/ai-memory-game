@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Winner</title>
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <div class="center">
+    <h1 id="winner"></h1>
+    <button onclick="playAgain()">Play Again</button>
+  </div>
+
+  <script>
+    const winner = localStorage.getItem('winner');
+    document.getElementById('winner').innerText = winner + ' Wins!';
+
+    function playAgain(){
+      window.location.href = 'landingpage.html';
+    }
+  </script>
+</body>
+</html>
