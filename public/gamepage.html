@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
+  <h1 id="title">WELCOME TO THE MEMORY GAME</h1>
   <h2 id="score"></h2>
   <div id="grid" class="grid"></div>
 
@@ -24,7 +25,9 @@
     let aiScore = 0;
     let turn = 'player';
 
-    let memory = {}; // symbol -> [indexes]
+    let memory = {}; 
+    let memoryOrder = []; // tracks order of seen cards
+    const MEMORY_LIMIT = 5;
 
     const grid = document.getElementById('grid');
 
@@ -95,14 +98,34 @@
       checkEnd();
     }
 
-    function remember(card){
-      const sym = card.dataset.symbol;
-      if(!memory[sym]) memory[sym] = [];
+function remember(card){
+  const sym = card.dataset.symbol;
+  const index = card.dataset.index;
 
-      if(!memory[sym].includes(card.dataset.index)){
-        memory[sym].push(card.dataset.index);
+  // Initialize if needed
+  if(!memory[sym]) memory[sym] = [];
+
+  // Avoid duplicates
+  if(!memory[sym].includes(index)){
+    memory[sym].push(index);
+    memoryOrder.push({ sym, index });
+  }
+
+  // Enforce memory limit
+  while(memoryOrder.length > MEMORY_LIMIT){
+    const oldest = memoryOrder.shift(); // remove oldest memory
+
+    const arr = memory[oldest.sym];
+    if(arr){
+      memory[oldest.sym] = arr.filter(i => i !== oldest.index);
+
+      // Clean empty symbol entries
+      if(memory[oldest.sym].length === 0){
+        delete memory[oldest.sym];
       }
     }
+  }
+}
 
     function getCardByIndex(index){
       return document.querySelector(`[data-index='${index}']`);
